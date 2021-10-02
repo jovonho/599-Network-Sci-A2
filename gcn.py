@@ -19,11 +19,11 @@ def load_data(dataset_str):
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
-        with open("data/gcn/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
+        with open(f"data/gcn/ind.{dataset_str}.{names[i]}", 'rb') as f:
             objects.append(pkl.load(f, encoding='latin1'))
 
     x, y, tx, ty, allx, ally, graph = tuple(objects)
-    test_idx_reorder = parse_index_file("data/gcn/ind.{}.test.index".format(dataset_str))
+    test_idx_reorder = parse_index_file(f"data/gcn/ind.{dataset_str}.test.index")
     test_idx_range = np.sort(test_idx_reorder)
 
     if dataset_str == 'citeseer':

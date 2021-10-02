@@ -1,0 +1,18 @@
+Girvan Newman k=500 samples to find the edge with most betweenness
+
+Citeseer:
+        Girvan-Newman modularity with 468 communities.
+                Q = 0.8595820091455907
+                NMI = 0.34589027331778194
+                ARI = 0.16331601428090864
+Girvan Newman took 0.02800273895263672s
+citeseer took 303.97657799720764s
+
+
+Cora:
+        Girvan-Newman modularity with 102 communities.
+                Q = 0.8044514856509317
+                NMI = 0.45496711839549275
+                ARI = 0.2473195373571939
+Girvan Newman took 0.025007009506225586s
+cora took 1465.1651289463043s
