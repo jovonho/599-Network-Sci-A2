@@ -107,6 +107,47 @@ def get_labels_pred(G, c):
     return labels_pred
 
 
+# Adapted from networkx source
+def _without_most_central_edges(G, most_valuable_edge):
+    
+    original_num_components = nx.number_connected_components(G)
+    num_new_components = original_num_components
+    while num_new_components <= original_num_components:
+        edge = most_valuable_edge(G)
+        G.remove_edge(*edge)
+        new_components = tuple(nx.connected_components(G))
+        num_new_components = len(new_components)
+    return new_components
+
+
+# Adapted from networkx source
+def girvan_newman_k_samples(G, k, most_valuable_edge=None):
+    if G.number_of_edges() == 0:
+        yield tuple(nx.connected_components(G))
+        return
+    # If no function is provided for computing the most valuable edge,
+    # use the edge betweenness centrality.
+    if most_valuable_edge is None:
+
+        def most_valuable_edge(G):
+            """Returns the edge with the highest betweenness centrality
+            in the graph `G`.
+
+            """
+            # We have guaranteed that the graph is non-empty, so this
+            # dictionary will never be empty.
+            betweenness = nx.edge_betweenness_centrality(G, k)
+            return max(betweenness, key=betweenness.get)
+
+    # The copy of G here must include the edge weight data.
+    g = G.copy().to_undirected()
+    # Self-loops must be removed because their removal has no effect on
+    # the connected components of the graph.
+    g.remove_edges_from(nx.selfloop_edges(g))
+    while g.number_of_edges() > 0:
+        yield _without_most_central_edges(g, most_valuable_edge)
+
+
 def q2_get_mean_scores(scores):
     mean_scores = {}
 
@@ -176,9 +217,7 @@ def q2_test_girvan_newman(G, scores, labels_true, k=500):
 
     for comm in comp:   
         print(f"GN iteration {i}")
-
         c = tuple(sorted(x) for x in comm)
-
         Q = modularity(G, c)
 
         # Stop iterating once the modularity starts dropping
@@ -195,12 +234,10 @@ def q2_test_girvan_newman(G, scores, labels_true, k=500):
         i += 1
 
     print(f"\tGirvan-Newman modularity with {len(c)} communities.")
-
-    scores = score_clustering(G, c, "girvan", labels_true, scores)
-
+    scores = score_clustering(G, c, "girvan", labels_true, scores
+    )
     t2 = time.time()
     print(f"Girvan Newman took {t2-t1}s")
-
     return scores
 
 
@@ -298,7 +335,6 @@ def q2_test_fluidc(G, scores, labels_true, n_communities):
 
 def q2_test_all_algos(G, scores, labels_true, n_communities, girvan=False, only_girvan=False):
 
-    # Girvan Newman is optional because it is the slowest
     if girvan:
         scores = q2_test_girvan_newman(G, scores, labels_true)
 
@@ -422,58 +458,6 @@ def q2_run_LFR(n_iter=10, girvan=False, only_girvan=False):
         out.write(json.dumps(scores_LFR))
         out.write("\n")
         out.write(json.dumps(means_LFR))
-
-
-# Adapted from networkx source
-def _without_most_central_edges(G, most_valuable_edge):
-    """Returns the connected components of the graph that results from
-    repeatedly removing the most "valuable" edge in the graph.
-
-    `G` must be a non-empty graph. This function modifies the graph `G`
-    in-place; that is, it removes edges on the graph `G`.
-
-    `most_valuable_edge` is a function that takes the graph `G` as input
-    (or a subgraph with one or more edges of `G` removed) and returns an
-    edge. That edge will be removed and this process will be repeated
-    until the number of connected components in the graph increases.
-
-    """
-    original_num_components = nx.number_connected_components(G)
-    num_new_components = original_num_components
-    while num_new_components <= original_num_components:
-        edge = most_valuable_edge(G)
-        G.remove_edge(*edge)
-        new_components = tuple(nx.connected_components(G))
-        num_new_components = len(new_components)
-    return new_components
-
-
-# Adapted from networkx source
-def girvan_newman_k_samples(G, k, most_valuable_edge=None):
-    if G.number_of_edges() == 0:
-        yield tuple(nx.connected_components(G))
-        return
-    # If no function is provided for computing the most valuable edge,
-    # use the edge betweenness centrality.
-    if most_valuable_edge is None:
-
-        def most_valuable_edge(G):
-            """Returns the edge with the highest betweenness centrality
-            in the graph `G`.
-
-            """
-            # We have guaranteed that the graph is non-empty, so this
-            # dictionary will never be empty.
-            betweenness = nx.edge_betweenness_centrality(G, k)
-            return max(betweenness, key=betweenness.get)
-
-    # The copy of G here must include the edge weight data.
-    g = G.copy().to_undirected()
-    # Self-loops must be removed because their removal has no effect on
-    # the connected components of the graph.
-    g.remove_edges_from(nx.selfloop_edges(g))
-    while g.number_of_edges() > 0:
-        yield _without_most_central_edges(g, most_valuable_edge)
 
 
 def q2_clustering_algorimths(girvan, girvan_only, LFR_iter):
